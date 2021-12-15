@@ -30,6 +30,12 @@ class Review(Model):
     playlist = ForeignKey(PlayList, related_name='reviews', on_delete=CASCADE)
     user = ForeignKey(User, related_name='reviews', on_delete=CASCADE)
 
+    def __str__(self):
+        return f"{self.user}'s review of {self.playlist}"
+
 class WatchListItem(Model):
     playlist = ForeignKey(PlayList, related_name='watchlist', on_delete=CASCADE)
     user = ForeignKey(User, related_name='watchlist', on_delete=CASCADE)
+
+    def __str__(self):
+        return f"{self.user} watching playlist {self.playlist}"

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
+from .models import Game, PlayList, Review, WatchListItem
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -34,19 +35,43 @@ class UserSerializerWithToken(serializers.ModelSerializer):
         fields = ['token', 'username', 'password']
 
 
-""" For reference later
-class TaskSerializer(serializers.ModelSerializer):
+class WatchListItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WatchListItem
+        fields = ['id', 'playlist', 'user']
+
+
+class GameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Game
+        fields = ['id', 'name', 'game_db_url']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return {
-            "id": instance.id,
-            "completed": instance.completed,
-            "due_date": instance.due_date,
-            "task": instance.task
+            'id': instance.id,
+            'rating': instance.rating,
+            'review_text': instance.review_text,
+            'created_at': instance.created_at,
+            'updated_at': instance.updated_at,
+            'user': {
+                'username': instance.user.username
+            }
         }
 
     class Meta:
-        model = Task
-        fields = ['id', 'task', 'completed', 'due_date', 'list_id']
+        model = Review
+        fields = ['id', 'rating', 'review_text', 'created_at',
+                  'updated_at', 'playlist', 'user']
 
-"""
+
+class PlayListSerializer(serializers.ModelSerializer):
+
+    reviews = ReviewSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PlayList
+        fields = ['id', 'name', 'creator', 'description',
+                  'content_type', 'youtube_url', 'game', 'reviews']
