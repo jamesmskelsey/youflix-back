@@ -1,10 +1,18 @@
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserSerializer, UserSerializerWithToken, WatchListItemSerializer, GameSerializer, ReviewSerializer, PlayListSerializer
 from .models import Review, Game, PlayList, WatchListItem
 
+
+@api_view(['GET'])
+def current_access_token(request):
+    return Response({
+        "client_id": "enlqcn8re8huq4yqzi6j5hchi022av",
+        "access_token": "idicjq3p7bogyuh97aea5a2h9mfgs3"
+    })
 
 @api_view(['GET'])
 def current_user(request):
@@ -23,21 +31,6 @@ class UserList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-""" For reference for later
-
-Shows how to do permission classes and the queryset to filter only objects
-belonging to a specific user
-
-class ListViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def get_queryset(self):
-        user = self.request.user
-        return List.objects.filter(user_id=user.id)
-    serializer_class = ListSerializer
-"""
-
-
 class GameViewSet(viewsets.ModelViewSet):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
@@ -52,7 +45,14 @@ class GameViewSet(viewsets.ModelViewSet):
 class WatchListItemViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
+        print(user)
         return WatchListItem.objects.filter(user=user.id)
+
+    def create(self, request):
+        user = self.request.user
+        print(f"Creating watchlist item for user: {user}, {request.data}")
+        item = user.watchlist.create(playlist_id=request.data['playlist_id'])
+        return Response(WatchListItemSerializer(item).data)
     serializer_class = WatchListItemSerializer
 
 
@@ -69,4 +69,25 @@ class PlayListViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
+
+    def create(self, request):
+        user = self.request.user
+        print(f"creating review for user: {user} {request.data}")
+        review = user.reviews.create(
+            user=user,
+            playlist_id=request.data['playlist_id'],
+            rating=request.data['rating'],
+            review_text=request.data['review_text']
+        )
+        return Response(ReviewSerializer(review).data)
+
+    def partial_update(self, request, pk=None):
+        user = self.request.user
+        review = get_object_or_404(Review, pk=pk)
+        print(f"updating review for user {user} {request.data} {review}")
+        if user == review.user:
+            Review.objects.filter(id=pk).update(**request.data)
+            review.refresh_from_db()
+        return Response(ReviewSerializer(review).data)
+
     serializer_class = ReviewSerializer

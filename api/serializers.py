@@ -36,6 +36,16 @@ class UserSerializerWithToken(serializers.ModelSerializer):
 
 
 class WatchListItemSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        return {
+            'id': instance.id,
+            'playlist': {
+                'id': instance.playlist.id,
+                'cover_url': instance.playlist.cover_url,
+            },
+            'user': instance.user.id
+        }
+
     class Meta:
         model = WatchListItem
         fields = ['id', 'playlist', 'user']
@@ -44,7 +54,7 @@ class WatchListItemSerializer(serializers.ModelSerializer):
 class GameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
-        fields = ['id', 'name', 'game_db_url']
+        fields = ['id', 'name', 'game_db_url', 'cover_url', 'category']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -74,4 +84,4 @@ class PlayListSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlayList
         fields = ['id', 'name', 'creator', 'description',
-                  'content_type', 'youtube_url', 'game', 'reviews']
+                  'content_type', 'youtube_url', 'game', 'reviews', 'cover_url']
